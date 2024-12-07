@@ -17,10 +17,12 @@ import sugar_grain
 import bucket
 import level
 import message_display
+from sound import *
 
 class Game:
     def __init__(self) -> None:
         pg.init()
+        
         self.screen = pg.display.set_mode(RES)
         self.clock = pg.time.Clock()
         self.iter = 0
@@ -29,12 +31,14 @@ class Game:
         self.font = pg.font.SysFont(None, 36)  # Default font, size 36
 
         # Create a Pymunk space with gravity
-        self.current_level = 2 # Start game at 0
+        self.current_level = 0 # Start game at 0
         self.level_complete = False
         self.space = pymunk.Space()
         self.space.gravity = (0, -9)  # Gravity pointing downwards in Pymunk's coordinate system
         # Iterations defaults to 10. Higher is more accurate collison detection
         self.space.iterations = 30 
+
+        self.is_paused = False
 
         self.drawing_lines = []
         self.sugar_grains = []
@@ -46,6 +50,7 @@ class Game:
         self.mouse_down = False
         self.current_line = None
         self.message_display = message_display.MessageDisplay(font_size=72)
+        self.s = Sounds()
         
         # Load the intro image
         self.intro_image = pg.image.load("./images/SugarPop.png").convert()  # Load the intro image
@@ -53,6 +58,7 @@ class Game:
         scale_height = self.intro_image.get_height() * WIDTH / self.intro_image.get_width()
         self.intro_image = pg.transform.scale(self.intro_image, (WIDTH, int(scale_height)))  # Scale to screen resolution
         
+
         pg.time.set_timer(LOAD_NEW_LEVEL, 2000)  # Load in 2 seconds
 
     def load_level(self, levelnumber=0):
@@ -116,6 +122,9 @@ class Game:
 
     def update(self):
         '''Update the program physics'''
+
+        if self.is_paused:
+            return
         # Keep an overall iterator
         self.iter += 1
         
@@ -125,7 +134,7 @@ class Game:
         # Cap delta_time to prevent instability from large time steps
         time_step = min(delta_time, MAX_TIME_STEP)
 
-        # Step the physics simulation forward with the calculated time_step
+        # Step the physics simulation forneward with the calculated time_step
         self.space.step(time_step)
         
         # Update our game counter
@@ -144,11 +153,15 @@ class Game:
             for bucket in self.buckets:
                 if bucket.count >= bucket.needed_sugar:
                     bucket.explode(self.sugar_grains)
+                    
+                    
                     # If all the buckets are gone, level up!
                     if not self.level_complete and self.check_all_buckets_exploded():
                         self.level_complete = True
                         self.message_display.show_message("Level Complete!", 2)
+                        self.s.complete_l()
                         pg.time.set_timer(LOAD_NEW_LEVEL, 2000)  # Schedule next level load
+                    
                 else:
                     bucket.count_reset()
             # Count the grains in the un-exploded buckets
@@ -161,6 +174,7 @@ class Game:
                 # Create new sugar to drop
                 new_sugar = sugar_grain.sugar_grain(self.space, self.level_spout_position[0], self.level_spout_position[1], 0.1)
                 self.sugar_grains.append(new_sugar)
+                
                 # Check if it's time to stop
                 if len(self.sugar_grains) >= self.total_sugar_count:
                     self.level_grain_dropping = False
@@ -169,9 +183,37 @@ class Game:
         """Draw the HUD displaying the number of grains."""
         # Prepare the text surface
         if self.total_sugar_count:
-            text_surface = self.font.render(f'{self.total_sugar_count - len(self.sugar_grains)}', True, (255, 255, 255))
+            text_surface = self.font.render(f'Total sugar : {self.total_sugar_count - len(self.sugar_grains)}', True, (255, 255, 255))
             # Draw the text surface on the screen
             self.screen.blit(text_surface, (10, 10))  # Position at top-left corner
+    
+    def level_num(self):
+        # displays the number ot level
+        if self.total_sugar_count:
+            text_surface = self.font.render(f'Level : {self.current_level}', True, (255, 255, 255))
+            # Draw the text surface on the screen
+            self.screen.blit(text_surface, (10, 40))
+
+    
+        
+    def sugar_in_buket(self):
+        # displays the number ot level
+        if self.total_sugar_count:
+            text_surface = self.font.render(f'{self.total_sugar_count}', True, (255, 255, 255))
+            # Draw the text surface on the screen
+            self.screen.blit(text_surface, (286, 730))
+    
+    def draw_button(self):
+        if self.total_sugar_count:
+            if self.space.gravity == (0, -9):
+                button_m = self.font.render(f'Gravity Down', True, (255, 255, 255))
+                self.screen.blit(button_m, (800, 30))
+            else:
+                button_m = self.font.render(f'Gravity up', True, (255, 255, 255))
+                self.screen.blit(button_m, (800, 30))
+
+
+    
 
     def draw(self):
         '''Draw the overall game. Should call individual item draw() methods'''
@@ -214,6 +256,15 @@ class Game:
         # Draw the heads-up display
         self.draw_hud()
 
+        self.level_num()
+
+        # if self.space.gravity == self.space.gravity:
+        self.draw_button()
+
+        self.sugar_in_buket()
+
+        
+
         # Show any messages needed        
         self.message_display.draw(self.screen)
 
@@ -226,13 +277,28 @@ class Game:
             if event.type == EXIT_APP or event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                 pg.quit()
                 sys.exit()
+
+            elif event.type == pg.KEYDOWN and event.key == pg.K_r:
+                self.current_level -= 1
+                pg.time.set_timer(LOAD_NEW_LEVEL, 100)
+                
+
+            elif event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                self.is_paused = not self.is_paused
+
+            elif event.type == pg.KEYDOWN and event.key == pg.K_UP:
+                self.space.gravity = (0, 9)
+
+            elif event.type == pg.KEYDOWN and event.key == pg.K_DOWN:
+                self.space.gravity = (0, -9)
+            
             elif event.type == pg.MOUSEBUTTONDOWN:
                 self.mouse_down = True
                 # Get mouse position and start a new dynamic line
                 mouse_x, mouse_y = pg.mouse.get_pos()
                 self.current_line = dynamic_item.DynamicItem(self.space, 'blue')
                 self.current_line.add_vertex(mouse_x, mouse_y)
-                
+        
             elif event.type == pg.MOUSEBUTTONUP:
                 self.mouse_down = False
                 if self.current_line:
@@ -258,6 +324,7 @@ class Game:
                 self.current_level += 1
                 if not self.load_level(self.current_level):
                     self.message_display.show_message("You Win!", 5)  # End of game message
+                    # self.s.end_game()
                     pg.time.set_timer(EXIT_APP, 5000)  # Quit game after 5 seconds
                 else:
                     self.message_display.show_message(f"Level {self.current_level} Start!", 2)
@@ -268,6 +335,7 @@ class Game:
             self.check_events()
             self.update()
             self.draw()
+            
 
 def main():
     game = Game()

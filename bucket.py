@@ -10,7 +10,8 @@ import pygame as pg
 import pymunk
 from settings import SCALE, HEIGHT, WIDTH
 from math import sqrt
-
+from sound import *
+import message_display
 class Bucket:
     def __init__(self, space, x, y, width, height, needed_sugar):
         """
@@ -61,6 +62,10 @@ class Bucket:
         
         self.exploded = False  # Track if the bucket has exploded
 
+        self.so= Sounds()
+
+        self.font = pg.font.SysFont(None, 36)
+
     def explode(self, grains):
         """
         Apply a radial force to all grains near the bucket and remove the bucket walls.
@@ -73,6 +78,7 @@ class Bucket:
         # Get the bucket's center position
         bucket_center_x = (self.left_wall.a[0] + self.right_wall.a[0]) / 2
         bucket_center_y = (self.left_wall.a[1] + self.left_wall.b[1]) / 2
+        self.so.explosion()
 
         # Apply radial force to each grain
         for grain in grains:
@@ -117,6 +123,9 @@ class Bucket:
         pg.draw.line(screen, color, to_pygame(self.right_wall.a), to_pygame(self.right_wall.b), 2)
         pg.draw.line(screen, color, to_pygame(self.bottom_wall.a), to_pygame(self.bottom_wall.b), 2)
 
+        # text_surface = self.font.render(f'try', True, (255, 255, 255))
+        # self.screen.blit(text_surface, (50, 50))
+
     def count_reset(self):
         if not self.exploded:
             self.count = 0
@@ -131,6 +140,7 @@ class Bucket:
             return  # Don't count grains if the bucket has exploded
 
         grain_pos = sugar_grain.body.position
+        
 
         # Get bucket boundaries
         left = self.left_wall.a[0]
@@ -141,9 +151,11 @@ class Bucket:
         # Check if the grain's position is within the bucket's bounding box
         if left <= grain_pos.x <= right and bottom <= grain_pos.y <= top:
             self.count += 1
+            self.so.sugar_d()
             return True  # Indicate that the grain was collected
+        else:
 
-        return False  # Grain not collected
+            return False  # Grain not collected
 
     def delete(self):
         if not self.exploded:

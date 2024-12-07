@@ -29,3 +29,6 @@ START_FLOW = pg.USEREVENT + 1
 FLOW_DELAY = pg.USEREVENT + 2
 LOAD_NEW_LEVEL = pg.USEREVENT + 3
 EXIT_APP = pg.USEREVENT + 4
+
+sound_dictionary = {"backgrou":["./music/background.mp3", 0], "level":["./music/completelevel.mp3", 1], "explode": ["./music/exploded.mp3", 2],
+                    "sugar_drop": ["./music/sugardrop.mp3", 3], "end": ["./music/theend.mp3", 4]}
