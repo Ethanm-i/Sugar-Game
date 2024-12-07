@@ -204,6 +204,7 @@ class Game:
             self.screen.blit(text_surface, (286, 730))
     
     def draw_button(self):
+        #function change the direction where graivty is going
         if self.total_sugar_count:
             if self.space.gravity == (0, -9):
                 button_m = self.font.render(f'Gravity Down', True, (255, 255, 255))

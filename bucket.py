@@ -152,10 +152,13 @@ class Bucket:
         if left <= grain_pos.x <= right and bottom <= grain_pos.y <= top:
             self.count += 1
             self.so.sugar_d()
+            
             return True  # Indicate that the grain was collected
         else:
 
             return False  # Grain not collected
+        
+        
 
     def delete(self):
         if not self.exploded:
