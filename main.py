@@ -2,7 +2,7 @@
 # Module Name: Sugar Pop Main Module
 # Project: Sugar Pop Program
 # Date: Nov 17, 2024
-# By: Brett W. Huffman
+# By: Ethan Mugabe
 # Description: The main implementation of the sugar pop game
 #############################################################
 

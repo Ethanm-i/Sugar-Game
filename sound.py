@@ -1,3 +1,11 @@
+#############################################################
+# Module Name: Sugar Pop Sound Module
+# Project: Sugar Pop Program
+# Date: Nov 17, 2024
+# By: Ethan Mugabe
+# Description: The settings implementation of the sugar pop game
+#############################################################
+
 import pygame as pg
 from settings import *
 
